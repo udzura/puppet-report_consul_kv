@@ -15,25 +15,46 @@ Puppet::Reports.register_report(:consul_kv) do
     uri = URI.parse(@config["consul_url"] || 'localhost:8500')
     @consul = Net::HTTP.new(uri.host, uri.port)
 
-    put_value(@consul, "last_provisioned", Time.now.iso8601)
-    put_value(@consul, "last_report", JSON.pretty_generate(build_report))
-    Puppet.notice("Report saved and finished: %s" % self.host)
+    put_value(@consul, key_path("last_provisioned"), Time.now.iso8601)
+    report = JSON.pretty_generate(build_report)
+    put_value(@consul, key_path("last_report"), report)
+    Puppet.notice("Report finished: %s" % self.host)
+
+    if event = @config["event_name"]
+      if res = put_value(@consul, event_path(event), report)
+        Puppet.notice("Event successfully kicked: %s, Event ID: %s" % [self.host, res["ID"]])
+      else
+        Puppet.notice("Event kick failed... skipping: %s" % self.host)
+      end
+    end
   end
 
-  def put_value(consul, k, v)
+  def put_value(consul, path, v)
     req = Net::HTTP::Put.new(key_path(k))
     req.body = v
     res = consul.request(req)
     case res
     when Net::HTTPOK
-      Puppet.err("Report saved to key %s, %s" % [key_path(k), res.body])
+      Puppet.notice("PUT to consul saved to %s, body: %s" % [path, res.body])
+      case res.body.chomp
+      when /^true|false$/
+        res.body =~ /true/
+      else
+        json = JSON.parse(res.body)
+        json.is_a?(Array) ? json.first : json
+      end
     else
-      Puppet.err("Report save failed: %s=%s, error: %s(%s)" % [key_path(k), v, res.body, res.inspect])
+      Puppet.err("PUT to consul failed: %s=%s, error: %s(%s)" % [path, v, res.body, res.inspect])
+      nil
     end
   end
 
   def key_path(slug=nil)
     ["v1", "kv", "puppet_report", self.host, slug].compact.join("/")
+  end
+
+  def event_path(slug=nil)
+    ["v1", "event", "fire", slug].compact.join("/")
   end
 
   def build_report
@@ -46,6 +67,7 @@ Puppet::Reports.register_report(:consul_kv) do
       "configuration_version" => self.configuration_version,
       "start_time" => (self.logs.first.time.utc.iso8601 rescue ""),
       "end_time" => (self.logs.last.time.utc.iso8601 rescue ""),
+      "master_certname" => Puppet.settings[:certname],
     }
     if rev = @config[:revision_file]
       if File.exist?(rev)
