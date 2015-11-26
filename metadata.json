@@ -1,0 +1,14 @@
+{
+  "name": "puppet-report_consul_kv",
+  "version": "0.1.0",
+  "author": "Uchio Kondo",
+  "summary": "Puppet reporter whish save details to Consul KV",
+  "license": "Apache-2.0",
+  "source": "https://github.com/udzura/puppet-report_consul_kv",
+  "project_page": "https://github.com/udzura/puppet-report_consul_kv#readme",
+  "issues_url": "https://github.com/udzura/puppet-report_consul_kv/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ]
+}
+
