@@ -1,5 +1,5 @@
 {
-  "name": "puppet-report_consul_kv",
+  "name": "udzura-report_consul_kv",
   "version": "0.2.0",
   "author": "Uchio Kondo",
   "summary": "Puppet reporter which save details to Consul KV",
