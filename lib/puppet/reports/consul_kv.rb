@@ -12,7 +12,7 @@ Puppet::Reports.register_report(:consul_kv) do
     raise(Puppet::ParseError, "Consul KV report config file #{configfile} not readable") unless File.file?(configfile)
 
     @config = YAML.load_file(configfile)
-    uri = URI.parse(@config["consul_url"] || 'localhost:8500')
+    uri = URI.parse(@config["consul_url"] || 'http://localhost:8500')
     @consul = Net::HTTP.new(uri.host, uri.port)
 
     put_value(@consul, key_path("last_provisioned"), Time.now.iso8601)
@@ -50,11 +50,11 @@ Puppet::Reports.register_report(:consul_kv) do
   end
 
   def key_path(slug=nil)
-    ["v1", "kv", "puppet_report", self.host, slug].compact.join("/")
+    "/" + ["v1", "kv", "puppet_reports", self.host, slug].compact.join("/")
   end
 
-  def event_path(slug=nil)
-    ["v1", "event", "fire", slug].compact.join("/")
+  def event_path(name=nil)
+    "/" + ["v1", "event", "fire", name].compact.join("/")
   end
 
   def build_report
