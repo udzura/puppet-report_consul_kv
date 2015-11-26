@@ -47,7 +47,7 @@ reports = consul_kv
 
 After this, puppet will save the reports to consul keys:
 
-* `"/puppet_reports/${hostname}/last_report"` for the time last provisioned
+* `"/puppet_reports/${hostname}/last_provisioned` for the time last provisioned
 * `"/puppet_reports/${hostname}/last_report"` for detail
 
 ## Development
